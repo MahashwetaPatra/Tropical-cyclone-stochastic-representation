@@ -90,7 +90,7 @@
  variance= sigma(:,:,T1); %%Final sigma matrix at time t(1260) where the v component reaches the 0.1
  yvariance=variance(2,2);
  fn=[fn;(h*yvariance)/(0.01*(U_T+0.1)*(U_T+0.1))];% epsilon e is taken as 1e-3
- ends
+ end
 figure(3);
 plot(Vs, fn, '.-b', 'markersize', 10)
 xlabel('v_0'); 
