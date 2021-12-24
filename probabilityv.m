@@ -20,9 +20,9 @@
 % [REF]: Kieu, C. Q., and Q. Wang, 2017: JAS, doi/pdf/10.1175/JAS-D-17-0028.1
 %
 %==========================================================================
+tic
 clc; close all; clear all;
 % Initialize parameters, using full Eqs. (61)-(63) in KW17.
-tic
 p1 = 200;    % p parameter: ratio of PBL over depth of troposphere 
 p2 = p1+1;   % aspect ratio R/H
 p3 = 1.0;    % storm size scale
@@ -32,26 +32,26 @@ f2 = 0.00;   % Coriolis force
 f1 = p1*f2;  % Coriolis force
 n = 30000;   % number of integrations
 dt = 0.01;  % time step
-a = 0.0001;    % std of u stochastic forcing -> v-variance is ~ 0.1%
-b = 0.0001;    % std of v stochastic forcing -> v-variance is ~ half
-c = 0.0001;    % std of b stochastic forcing -> v-variance is ~ half
+a = 0.001;    % std of u stochastic forcing -> v-variance is ~ 0.1%
+b = 0.001;    % std of v stochastic forcing -> v-variance is ~ half
+c = 0.001;    % std of b stochastic forcing -> v-variance is ~ half
 ne = 100;    % number of Monte-Carlo integrations
-v_array=[];STD=[];P_array=[];
-for trial_0s=0.001:0.001:0.01,% trial is the initial value of v_0
+v_array=zeros(10,1);P_array=zeros(10,1);
+arrayN=1;
+for trial_0s=0.001:0.001:0.01% trial is the initial value of v_0
     t(1)=0;  %initializing x,y,z,t
-    %v_array=[v_array;trial];
-    v_array=[v_array;trial_0s];
+    v_array(arrayN)=trial_0s;
     %
     % Set HSD initial conditions by creating 4 different initial points in the
     % phase space of (u,v,b)
     %
     u_0s = [-0.01, -1.0, -1.0, -0.1];
-    %trial_0s = [0.003,  0.005, 0.01, 0.05];
     b_0s = [0.0001,   0.5,  1.0,  0.1];
-    %v_0s(1)=trial_0s(trial);
     v_0s(1)=trial_0s;
-    Fraction=[];param=[];
-    for N=1:10,
+    STD=zeros(10,1);
+    Fraction=zeros(10,1);
+    param=[];
+    for N=1:10
         ne = 100;    % number of Monte-Carlo integrations
         onset_stat=zeros(ne,1); %Preallocating the dimensions of onset-vectors
         onset_stat_plus=zeros(ne,1);
@@ -78,7 +78,7 @@ for trial_0s=0.001:0.001:0.01,% trial is the initial value of v_0
                     onset_stat_zero(k) = 0;
                     onset_stat(k)=t1(i);
                     break 
-                elseif (0<v1(i)<0.1)
+                elseif (0<v1(i)) && (v1(i)<0.1)
                     onset_stat_plus(k) = 0;
                     onset_stat_zero(k) = 0;
                     onset_stat(k)=0;
@@ -91,22 +91,16 @@ for trial_0s=0.001:0.001:0.01,% trial is the initial value of v_0
         %Probabilities to hit M^+ or M^-
         [dplus , numcolplus] = size(Hitting_times_Mplus);
         [dzero , numcolzero] = size(Hitting_times_Mzero);
-        ProbHitMplus = dplus/ne
+        ProbHitMplus = dplus/ne;
         ProbHitMzero = dzero/ne ;
-        Fraction=[Fraction;ProbHitMplus];
+        Fraction(N)=ProbHitMplus;
         mplus=mean (Hitting_times_Mplus);
         sigmaplus= std(Hitting_times_Mplus);
         Varplus= sigmaplus^2;
-        STD=[STD;Varplus]; %% keeping the variance values in an aaray
+        STD(N)=Varplus; %% keeping the variance values in an aaray
     end
-    % v_array
-    % Fraction  %%array of probalities to reach l before 0 for different v_0
-    % figure(4);
-    % plot(v_array, Fraction, '.-b', 'markersize', 10)
-    % xlabel('T (150<p<250)'); 
-    % ylabel('H(T)'); 
-    % set(gca, 'GridLineStyle', ':') %dotted grid lines
-    % set(gca,'FontName','Times','FontSize',24,'LineWidth',2.75)
+    size(STD);
+    size(Fraction);
     P=mean(Fraction);
     SF=std(Fraction);
     ZF=1.96;
@@ -115,15 +109,15 @@ for trial_0s=0.001:0.001:0.01,% trial is the initial value of v_0
     P2=P-(ZF*SF)/sqrt(10);
     PB=[trial_0s;trial_0s];
     EB=[P1;P2];
-    P_array=[P_array;P];
-    figure(4);
+    P_array(arrayN)=P;
+    arrayN=arrayN+1;
+    figure(1);
     set(gca, 'GridLineStyle', ':') %dotted grid lines
     set(gca,'FontName','Times','FontSize',24,'LineWidth',2.75)
     plot(PB,EB, '.-black', 'markersize', 20)
     hold on;
-%    plot(trial_0s,P, '.-red', 'markersize', 10)
     xlabel('T (150<p<250)'); 
     ylabel('H(T)'); 
 end
-    plot(v_array,P_array, '.-red', 'markersize', 20)
- 
+plot(v_array,P_array, '.-red', 'markersize', 20)
+toc 
